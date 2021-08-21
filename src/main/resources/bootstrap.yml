@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: meeting-monolith-app
+  cloud:
+    config:
+      enabled: false

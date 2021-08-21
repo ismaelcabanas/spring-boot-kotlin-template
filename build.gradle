@@ -1,0 +1,130 @@
+buildscript {
+    ext {
+      // Go to https://github.com/spring-projects/spring-cloud/wiki to verify
+      // compatibility between Spring Cloud & Spring Boot versions.
+
+      springBootBomVersion = "2.3.4.RELEASE"
+      springCloudBomVersion = "Hoxton.SR8"
+      springCloudFeignVersion = "2.2.5.RELEASE"
+      swaggerVersion = "3.0.0"
+      feignVersion = "10.4.0"
+      jacksonVersion = "2.9.10"
+      logbackVersion = "1.2.3"
+      projectreactorVersion = "3.2.12.RELEASE"
+      jupiterVersion = "5.7.2"
+    }
+}
+
+plugins {
+    id 'application'
+    id 'jacoco'
+    id 'org.unbroken-dome.test-sets' version '4.0.0'
+    id 'idea'
+    id 'org.jetbrains.kotlin.jvm' version '1.4.32'
+    id 'org.jetbrains.kotlin.plugin.spring' version '1.4.32'
+    id 'io.gitlab.arturbosch.detekt' version '1.17.1'
+}
+
+group 'cabanas.garcia.ismael'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+  kotlinOptions {
+    jvmTarget = JavaVersion.VERSION_11
+  }
+}
+
+testSets {
+  integrationTest { dirName = 'integration-test' }
+  acceptanceTest { dirName = 'acceptance-test' }
+}
+
+dependencies {
+    // Spring dependencies
+    implementation platform("org.springframework.cloud:spring-cloud-dependencies:${springCloudBomVersion}")
+    implementation platform("org.springframework.boot:spring-boot-dependencies:${springBootBomVersion}")
+    implementation platform("org.springframework.cloud:spring-cloud-openfeign:${springCloudFeignVersion}")
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.cloud:spring-cloud-starter-config")
+    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
+    implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
+    implementation("org.springframework.cloud:spring-cloud-starter-netflix-hystrix")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.cloud:spring-cloud-starter-stream-kafka")
+
+    // Devtools
+    compileOnly("org.springframework.boot:spring-boot-devtools")
+
+    // Feign
+    implementation("io.github.openfeign:feign-jaxrs:10.0.1")
+
+    // Api docs
+    implementation("io.springfox:springfox-boot-starter:${swaggerVersion}")
+
+    // Jackson
+    implementation platform("com.fasterxml.jackson:jackson-bom:2.9.6")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+
+    // Kotlin
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+
+    // Test
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.4.2")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.4.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
+    testImplementation("org.mockito:mockito-inline:2.23.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:2.27.0")
+    testImplementation("org.assertj:assertj-core:3.11.0")
+    testImplementation("com.github.tomakehurst:wiremock:2.18.0")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("io.rest-assured:spring-mock-mvc:3.1.1")
+    testImplementation("com.github.javafaker:javafaker:1.0.2")
+
+    // Kotlin test
+    testImplementation("org.jetbrains.kotlin:kotlin-test")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
+    testImplementation("io.kotest:kotest-assertions-core:4.4.3")
+    testImplementation("io.mockk:mockk:1.10.5")
+
+    // Integration test
+    integrationTestImplementation("org.awaitility:awaitility:3.1.5")
+    integrationTestImplementation("org.testcontainers:testcontainers:1.15.3")
+    integrationTestImplementation("org.testcontainers:junit-jupiter:1.15.3")
+    integrationTestImplementation("org.testcontainers:postgresql:1.15.3")
+    integrationTestImplementation("org.testcontainers:kafka:1.15.3")
+
+  // Acceptance test
+  acceptanceTestImplementation("org.awaitility:awaitility:3.1.5")
+  acceptanceTestImplementation("org.testcontainers:testcontainers:1.15.3")
+  acceptanceTestImplementation("org.testcontainers:junit-jupiter:1.15.3")
+  acceptanceTestImplementation("org.testcontainers:postgresql:1.15.3")
+  acceptanceTestImplementation("org.testcontainers:kafka:1.15.3")
+}
+
+run {
+    // Needed to enable Devtools for 'run' task
+    classpath = sourceSets.main.compileClasspath + sourceSets.main.runtimeClasspath
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+}
+
+check.dependsOn integrationTest
+integrationTest.mustRunAfter test
+acceptanceTest.mustRunAfter integrationTest
+check.dependsOn jacocoIntegrationTestReport
+
+mainClassName = 'cabanas.garcia.ismael.meetup.infrastructure.ApplicationKt'

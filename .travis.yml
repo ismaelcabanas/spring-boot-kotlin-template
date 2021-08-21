@@ -1,0 +1,57 @@
+dist: bionic
+language: java
+jdk: openjdk11
+
+branches:
+  only:
+    - master
+
+install:
+  - configure_docker
+  - sudo chmod +x ./gradlew
+
+before_cache:
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/modules-2/
+    - $HOME/.gradle/wrapper/dists/
+
+stages:
+  - name: Check
+    if: type = pull_request
+  - name: Deploy
+    if: type != pull_request
+
+jobs:
+  include:
+    - stage: Check
+      script:
+        - ./gradlew check --stacktrace
+    - stage: Deploy
+      script: skip
+      deploy:
+        provider: "s3"
+        access_key_id: $ES_S3_ACCESS_KEY
+        secret_access_key: $ES_S3_SECRET_KEY
+        bucket: "adevinta-spain-datadog"
+        region: eu-west-1
+        glob: "*.json"
+        local_dir: "datadog"
+        upload-dir: "meeting-monolith-app_build$TRAVIS_BUILD_NUMBER"
+    - script:
+        - |
+          ./gradlew build installDist --stacktrace
+          DD_REGEX="^.*\[deploy_datadog_only\].*$"
+          if echo $TRAVIS_COMMIT_MESSAGE |grep -E -q -x $DD_REGEX ; then
+            echo "Deploying only Datadog Objects"
+            cp -f datadog/pipeline-datadog.yml deploy/pipeline.yml
+          else
+            echo "Regular deploy"
+            deploy_docker
+            tag_last_deployed_docker_image latest
+          fi
+          curl --user "${ARTIFACTORY_USER}:${ARTIFACTORY_PWD}" -s https://artifactory.mpi-internal.com/artifactory/generic-local/scmspain/devops-common--global-account-platform/upload_and_enrich_paas.bash | bash
+after_failure: reports-publisher > rp.log
+after_success: reports-publisher > rp.log

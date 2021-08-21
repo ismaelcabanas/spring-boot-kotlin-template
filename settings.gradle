@@ -1,0 +1,16 @@
+pluginManagement {
+    repositories {
+      gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+  repositories {
+    mavenCentral()
+  }
+}
+
+rootProject.name=projectName
+
+gradle.startParameter.excludedTaskNames << "compileJava"
+gradle.startParameter.excludedTaskNames << "compileTestJava"
+gradle.startParameter.excludedTaskNames << "compileIntegrationTestJava"

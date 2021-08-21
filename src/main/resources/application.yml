@@ -1,0 +1,44 @@
+spring:
+  main:
+    banner-mode: "OFF"
+    cloud-platform: kubernetes
+  profiles:
+    active: dev
+  security:
+    user:
+      name: "efbe4a3c7"
+      password: "a3fd9c336"
+
+server:
+  port: 8000
+  compression:
+    enabled: true
+    mime-types: application/json
+
+#hystrix:
+#  command:
+#    MyService#getUsersFromAnotherService(int):
+#      execution:
+#        isolation:
+#          strategy: SEMAPHORE
+
+hystrix.command.default.execution.isolation.strategy: SEMAPHORE
+hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds: 800
+
+ribbon:
+  ConnectTimeout: 1000
+  ReadTimeout: 2000
+  MaxAutoRetries: 1
+
+eureka:
+  client:
+    enabled: false
+    registerWithEureka: false
+    fetchRegistry: false
+
+schibsted:
+  autoconfig:
+    logging:
+      ownerteam: "isma"
+
+springfox.documentation.open-api.v3.path: /schema
